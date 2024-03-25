@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
-	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -24,6 +25,22 @@ func NewGocdkStack(scope constructs.Construct, id string, props *GocdkStackProps
 	// queue := awssqs.NewQueue(stack, jsii.String("GocdkQueue"), &awssqs.QueueProps{
 	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
 	// })
+
+	table := awsdynamodb.NewTable(stack, jsii.String("myUserTable"), &awsdynamodb.TableProps{
+		PartitionKey: &awsdynamodb.Attribute{
+			Name: jsii.String("username"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+		TableName: jsii.String("users"),
+	})
+
+	myFn := awslambda.NewFunction(stack, jsii.String("myLambdaFunction"), &awslambda.FunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
+		Handler: jsii.String("main"),
+		Code:    awslambda.Code_FromAsset(jsii.String("lambda/function.zip"), nil),
+	})
+
+	table.GrantReadWriteData(myFn)
 
 	return stack
 }
